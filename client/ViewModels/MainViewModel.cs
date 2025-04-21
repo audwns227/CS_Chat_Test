@@ -25,7 +25,7 @@ namespace client.ViewModels
             set { _textModel = value; OnPropertyChanged(nameof(textModel)); }
         }
 
-        public ObservableCollection<string> messageList = new ObservableCollection<string>();
+        private ObservableCollection<string> messageList = new ObservableCollection<string>();
 
         public ObservableCollection<string> MessageList
         {
@@ -39,11 +39,11 @@ namespace client.ViewModels
             {
                 client = new TcpClient();
                 client.Connect("127.0.0.1", 1234);
-                messageList.Add("[LOG] : Connected");
+                MessageList.Add("[LOG] : Connected");
             }
             catch (Exception ex)
             {
-                messageList.Add("[LOG] : Connection failed - " + ex.Message);
+                MessageList.Add("[LOG] : Connection failed - " + ex.Message);
             }
         }
 
@@ -56,10 +56,41 @@ namespace client.ViewModels
             }
             string message = textModel.Text;
             byte[] byteData = Encoding.Default.GetBytes(message);
-            client.GetStream().Write(byteData, 0, byteData.Length);
 
-            messageList.Add($"Client : {message}");
+            try
+            {
+                client.GetStream().Write(byteData, 0, byteData.Length);
+                _sendAckT.TrySetResult(true);
+                MessageList.Add($"[Client] : {message}");
+            }
+            catch(Exception ex)
+            {
+                MessageList.Add("[LOG] : Send failed - " + ex.Message);
+            }
             textModel.Text = string.Empty;
+        }
+
+        private void ReceivedMessage()
+        {
+            byte[] message = new byte[1024];
+            client.GetStream().Read(message, 0, message.Length);
+
+            try
+            {
+                string strData = Encoding.Default.GetString(message);
+
+                Debug.WriteLine($"Server Message : {strData}");
+                int endPoint = strData.IndexOf('\0');
+                string parsedMessage = strData.Substring(0, endPoint + 1);
+                //Debug.WriteLine($"Server Message : {parsedMessage}");
+
+                MessageList.Add($"[Server] : {parsedMessage}");
+            }
+            catch(Exception ex)
+            {
+                MessageList.Add("[LOG] : Received failed - " + ex.Message);
+            }
+
         }
 
         public MainViewModel()
@@ -78,7 +109,7 @@ namespace client.ViewModels
             //TODO
             //서버에 전송 후 수신
             SendMessage();
-
+           
             var TimeoutTask = Task.Delay(timeout);
             var completeTask = await Task.WhenAny(_sendAckT.Task, TimeoutTask);
 
@@ -91,13 +122,16 @@ namespace client.ViewModels
         {
             bool result = await SendTextCommandAsync(timeout: 3000);
 
+            Debug.WriteLine("[LOG] : Finish Send");
             if (result)
             {
-                //Debug.WriteLine($"[Send] : {line}");
-                messageList.Add("[LOG] : Send Complete");
+                Debug.WriteLine("Send Complete");
+                ReceivedMessage();
             }
             else
-                messageList.Add("[LOG] : Send Fail");
+            {
+                Debug.WriteLine("Send Error");
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -20,7 +20,7 @@
         </Grid.ColumnDefinitions>
 
         <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Background="White" Padding="10" Margin=" 10">
-            <ListBox ItemsSource="{Binding messageList}" >
+            <ListBox ItemsSource="{Binding MessageList}" >
                 <b:Interaction.Behaviors>
                     <local:AutoScrollBehavior />
                 </b:Interaction.Behaviors>

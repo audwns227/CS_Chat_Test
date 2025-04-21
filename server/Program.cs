@@ -16,12 +16,14 @@ class Program
 
         TcpClient client = listener.AcceptTcpClient(); // 클라이언트 객체를 만들어 1234에 연결한 client 연결 수락
         Console.WriteLine("클라이언트 연결됨");
+
+        NetworkStream stream = client.GetStream();
         while (true)
         {
             // Socket은 byte[] 형식으로 데이터를 주고받음
             byte[] byteData = new byte[1024];
             //client가 write한 정보를 읽어옴
-            client.GetStream().Read(byteData, 0, byteData.Length);
+            stream.Read(byteData, 0, byteData.Length);
 
             //출력을 위해 string형으로 바꿔줌
             string strData = Encoding.Default.GetString(byteData);
@@ -33,33 +35,10 @@ class Program
 
             //파싱된 데이터를 출력해주고 무한 반복
             Console.WriteLine(parsedMessage);
-        }
-    }
 
-    static void HandleClient(TcpClient client)
-    {
-        NetworkStream stream = client.GetStream();
+            stream.Write(byteData, 0, byteData.Length);
 
-        try
-        {
-            using (StreamReader sr = new StreamReader(stream))
-            using (StreamWriter sw = new StreamWriter(stream))
-            {
-                string message = sr.ReadLine();
-                Console.WriteLine("클라이언트가 보낸 메시지: " + message);
-
-                sw.WriteLine("서버 응답: " + message);
-                sw.Flush();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("오류: " + ex.Message);
-        }
-        finally
-        {
-            client.Close();
-            Console.WriteLine("클라이언트 연결 종료");
         }
     }
 }
+   
