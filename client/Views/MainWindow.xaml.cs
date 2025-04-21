@@ -1,4 +1,6 @@
-﻿using System;
+﻿using client.Models;
+using client.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,9 +22,12 @@ namespace client
     /// </summary>
     public partial class MainWindow : Window
     {
+        MainViewModel _viewModel;
+
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = new MainViewModel();
         }
     }
 }
